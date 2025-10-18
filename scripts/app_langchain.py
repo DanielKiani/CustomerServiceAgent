@@ -1,7 +1,6 @@
 import gradio as gr
 from gtts import gTTS
-# This now imports from your final, improved from-scratch agent file
-from agent import CustomerServiceAgent
+from agent_langchain import CustomerServiceAgent
 
 # --- Gradio UI Functions ---
 
@@ -26,10 +25,12 @@ def respond(text_query, history_state):
         formatted_history = "\n---\n".join([f"**You:** {turn['user']}\n\n**Agent:** {turn['assistant']}" for turn in history_state])
         return "", history_state, formatted_history
 
-    # Get the response from the from-scratch agent, passing the query and history
-    assistant_response = agent.get_rag_response(text_query, history_state)
+    # Get the response from the LangChain agent. Note that the LangChain agent
+    # manages its own internal memory; we don't need to pass the history to it.
+    # The history_state here is just for the UI display.
+    assistant_response = agent.get_response(text_query)
     
-    # Append the new turn to the history state (list of dictionaries)
+    # Append the new turn to the history state for the UI
     new_history = history_state + [{'user': text_query, 'assistant': assistant_response}]
     
     # Format the entire history for display in the Markdown component
@@ -38,17 +39,17 @@ def respond(text_query, history_state):
     return assistant_response, new_history, formatted_history
 
 # --- Launch the Gradio Web Interface ---
-print("Launching Gradio Interface for IMPROVED From-Scratch Agent...")
+print("Launching Gradio Interface for LangChain Agent with Advanced Safeguards...")
 
-# Instantiate the agent from agent_scratch_improved.py
+# Instantiate the agent from agent.py
 agent = CustomerServiceAgent()
 
 # Define the UI layout using Gradio Blocks for more control
 with gr.Blocks(theme=gr.themes.Soft(), title="Advanced Customer Service Agent") as app:
-    gr.Markdown("# 🤖 Advanced Customer Service Agent (From Scratch - Improved)")
+    gr.Markdown("# 🤖 Advanced Customer Service Agent (LangChain)")
     gr.Markdown("Type your query in the text box and press the 'Submit' button.")
 
-    # State to hold the conversation history as a list of dictionaries
+    # State to hold the conversation history for the UI display
     history_state = gr.State([])
 
     with gr.Row():
@@ -89,7 +90,6 @@ with gr.Blocks(theme=gr.themes.Soft(), title="Advanced Customer Service Agent") 
         outputs=[audio_output]
     )
     
-    gr.Markdown("--- \n *Project based on the roadmap by Gemini.*")
 
 # Launch the app with a public share link
 app.launch(debug=True, share=True)

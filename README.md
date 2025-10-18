@@ -1,11 +1,11 @@
 ![Banner](assets/banner.png)
-[![Python](https://img.shields.io/badge/Python-3.12.11-blue?logo=python)](https://www.python.org/)[![PyTorch](https://img.shields.io/badge/PyTorch-2.8-EE4C2C?logo=pytorch)](https://pytorch.org/)![Made with ML](https://img.shields.io/badge/Made%20with-ML-blueviolet?logo=openai)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)](https://www.python.org/)[![PyTorch](https://img.shields.io/badge/PyTorch-2.8-EE4C2C?logo=pytorch)](https://pytorch.org/)[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-yellow)](https://huggingface.co/spaces)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 # 🤖 Advanced Customer Service Agent
 
-An intelligent, multi-modal customer service agent built with a Retrieval-Augmented Generation (RAG) pipeline. This agent can understand user sentiment, retrieve relevant information from a knowledge base, and provide empathetic, context-aware responses in both text and voice.
+An intelligent customer service agent built with a Retrieval-Augmented Generation (RAG) pipeline Made from scratch and also with Langchain. This agent understands user sentiment, retrieves information from a knowledge base, and provides empathetic, context-aware responses. It features a robust, multi-layered safeguard system to ensure conversations remain on-topic and safe.
 
-the gradio demo can be found [Here](https://huggingface.co/datasets/MakTek/Customer_support_faqs_dataset)
+The live Gradio demo is hosted on Hugging Face Spaces: **[🚀 View Demo Here](https://huggingface.co/spaces/Deathshot78/CustomerServiceAgent)**
 
 ![Gradio](assets/gradio.png)
 
@@ -15,100 +15,103 @@ the gradio demo can be found [Here](https://huggingface.co/datasets/MakTek/Custo
 
 - [📖 About The Project](#-about-the-project)
 - [✨ Features](#-features)
-- [🛠️ Tech Stack & Model Architecture](#️-tech-stack--model-architecture)
-  - [Model Selection Rationale](#model-selection-rationale)
-- [📊 Performance Benchmark](#-performance-benchmark)
+- [🧠 Project Journey & Key Learnings](#-project-journey--key-learnings)
+- [🛠️ Final Architecture & Tech Stack](#️-final-architecture--tech-stack)
 - [🔮 Future Improvements](#-future-improvements)
 - [🚀 Getting Started](#-getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation & Usage](#installation--usage)
 
 ---
 
 ## 📖 About The Project
 
-This project is a complete implementation of an advanced AI customer service agent. The core of the agent is a RAG pipeline that allows it to answer user queries based on a predefined knowledge base, ensuring factual and relevant responses. It includes conversation memory to handle follow-up questions and sentiment analysis to adapt its tone, making the interaction feel more natural and empathetic.
+This project chronicles the end-to-end development of an AI customer service agent, from a simple prototype to a production-ready application with advanced safeguards and with Langchain and from scratch implementations. The agent's core is a RAG pipeline that answers queries based on a predefined knowledge base. The final version integrates a custom, multi-signal moderation system to handle off-topic questions and a dynamic prompting strategy to adapt its tone based on user sentiment.
 
 ---
 
 ## ✨ Features
 
-- **🧠 Conversation Memory**: Remembers previous turns in the conversation to understand context.
-- **😠 Sentiment-Aware**: Detects user sentiment (Positive/Negative) and adjusts its persona to be more helpful or empathetic.
-- **📚 Retrieval-Augmented Generation (RAG)**: Retrieves relevant information from a vector database to provide accurate, knowledge-based answers.
+- **🛡️ Advanced Safeguards**: A custom, multi-signal moderation system rejects off-topic queries by combining keyword matching, embedding similarity, and zero-shot classification.
+- **🧠 Conversation Memory**: Remembers previous turns to understand context and handle follow-up questions effectively.
+- **😠 Dynamic Persona**: Detects user sentiment (`Positive`/`Negative`) and dynamically adjusts its persona in the prompt to be more helpful or empathetic.
+- **📚 Retrieval-Augmented Generation (RAG)**: Retrieves relevant "chunks" of information from a FAISS vector database to provide accurate, knowledge-based answers.
 - **🔊 Text-to-Speech**: Can read its responses aloud for a complete voice-enabled experience.
 - **🌐 Interactive UI**: Built with Gradio for an easy-to-use web interface.
 
 ---
 
-## 🛠️ Tech Stack & Model Architecture
+## 🧠 Project Journey & Key Learnings
 
-The agent is built on a modern RAG architecture using the Hugging Face ecosystem.
+This project evolved significantly, with each phase revealing new challenges and leading to more sophisticated solutions.
 
-1. **User Query**: The user asks a question.
-2. **Sentiment Analysis**: The query's sentiment is analyzed.
-3. **Embedding & Retrieval**: The query is converted into a vector embedding. This embedding is used to search a FAISS vector database to find the most relevant documents from the knowledge base.
-4. **Prompt Engineering**: A detailed prompt is constructed containing the agent's persona (based on sentiment), the conversation history, the retrieved documents (context), and the user's current query.
-5. **LLM Response Generation**: The complete prompt is sent to the LLM, which generates a context-aware and tonally appropriate response.
-6. **Text-to-Speech**: The final text response can be converted to audio.
+#### 1. The Quality vs. Speed Dilemma
+The initial prototype used `google/flan-t5-base` for fast responses (~4 seconds). However, it struggled to follow persona instructions, often giving blunt or unhelpful answers to frustrated users. We benchmarked this against `google/flan-t5-large`. While significantly slower (~20 seconds on a CPU), the larger model's ability to adopt an empathetic persona was a non-negotiable requirement for a customer service agent. **Key Learning:** For user-facing applications, response quality and the ability to follow nuanced instructions are often more important than raw speed.
 
-### Model Selection Rationale
+#### 2. The Safeguard Challenge
+Ensuring the agent stayed on-topic was the most critical challenge.
+- **Initial Failure:** A simple, prompt-based moderator using `flan-t5-base` proved unreliable. It failed to understand context-dependent follow-up questions and was easily fooled by well-formed but irrelevant queries (e.g., "What's the recipe for lasagna?").
+- **The Breakthrough - A Multi-Signal Approach:** The final solution was a "Defense in Depth" strategy implemented in a single function. Instead of relying on one signal, our safeguard combines three:
+  1.  **Keyword Heuristics:** A fast check for obvious on-topic words.
+  2.  **Embedding Similarity:** Measures the semantic relevance of a query against the entire knowledge base.
+  3.  **Zero-Shot Classification:** Uses a dedicated classifier (`facebook/bart-large-mnli`) to explicitly categorize the query into allowed topics or "off-topic."
+- **Final Logic:** By combining these signals with weighted scores, we created a robust and nuanced gatekeeper that successfully rejects irrelevant queries while understanding legitimate follow-ups.
 
-| Component | Model | Reason for Choice |
-| :--- | :--- | :--- |
-| **Embedding** | `sentence-transformers/all-MiniLM-L6-v2` | A very lightweight and fast model that provides excellent performance for semantic retrieval. It's ideal for creating knowledge base embeddings without requiring massive computational resources. |
-| **Response Generation** | `google/flan-t5-large` | We chose this model after benchmarking it against the smaller `flan-t5-base`. While slower, `flan-t5-large` is significantly better at following complex instructions, such as adopting an empathetic persona. This was crucial for handling negative user sentiment effectively. |
-| **Sentiment Analysis** | `distilbert-base-uncased-finetuned-sst-2-english` | A small, fast, and accurate sentiment classifier. Its efficiency ensures that adding sentiment awareness doesn't create a bottleneck in the response pipeline. |
-| **Text-to-Speech** | `gTTS` (Google Text-to-Speech) | Chosen for its simplicity and reliability. It's very easy to implement and works consistently across different environments, making it perfect for this project. |
+#### 3. Refactoring for Production
+With the core logic proven, the final step was to refactor the project for maintainability and scalability. I explored both a from-scratch implementation and a version using the **LangChain** framework. The final version combines the best of both worlds: it uses LangChain's powerful components (like `ConversationalRetrievalChain`) but replaces its default moderation with our superior, custom-built multi-signal safeguard.
+
+#### 4. The "Garbage-In, Garbage-Out" Principle: Knowledge Base is King
+Even with advanced safeguards and a capable LLM, the agent's performance is fundamentally limited by the quality of its knowledge base. We observed several "retrieval failures" where the agent gave factually incorrect or irrelevant answers. For example, when asked for the information needed to find a lost package, the retriever found a document about returning a *wrong item* because it was the most semantically similar text in the generic FAQ dataset. The LLM then correctly answered based on this faulty context. **Key Learning:** A RAG system is only as good as its knowledge. The most significant improvement for a production system is not a better model, but a highly curated, accurate, and specific knowledge base tailored to the agent's exact domain.
 
 ---
 
-## 📊 Performance Benchmark
+## 🛠️ Final Architecture & Tech Stack
 
-A key decision in this project was selecting the right LLM for response generation. We tested two models on a Google Colab CPU environment to measure the trade-off between response time and quality.
+The final architecture is a robust pipeline with a pre-processing safeguard gate.
 
-| Model | Average Response Time (Colab CPU) | Response Quality |
-| :--- | :--- | :--- |
-| `google/flan-t5-base` | ~4 seconds | Fast, but often ignored persona instructions and provided blunt, unhelpful answers to negative queries. |
-| `google/flan-t5-large` | ~20 seconds | Significantly slower, but consistently followed the empathetic persona instructions, leading to much higher-quality, more appropriate responses. |
+1.  **User Query**: The user asks a question.
+2.  **🛡️ Safeguard Gate**: The query is first sent to our multi-signal moderator. If it's off-topic, the process stops and a polite refusal is returned.
+3.  **Sentiment Analysis**: If the query is on-topic, its sentiment is analyzed.
+4.  **Conversational Rewriting**: Follow-up questions are rewritten into standalone queries for better retrieval.
+5.  **RAG Pipeline**: The standalone query is used to retrieve context from the FAISS index.
+6.  **Dynamic Prompting**: A prompt is constructed with the persona, guardrails, and retrieved context.
+7.  **LLM Response Generation**: The prompt is sent to `google/flan-t5-large` to generate the final answer.
 
-**Conclusion**: We chose `flan-t5-large` because the improvement in response quality and instruction-following was critical for the agent's primary function, justifying the longer response time for a portfolio demonstration.
+| Component | Model / Library |
+| :--- | :--- |
+| **Orchestration** | LangChain / Custom Python |
+| **Embedding** | `sentence-transformers/all-MiniLM-L6-v2` |
+| **Response Generation** | `google/flan-t5-large` |
+| **Safeguard (Moderation)** | Custom multi-signal logic using `facebook/bart-large-mnli` |
+| **Vector Store** | `faiss-cpu` |
+| **User Interface** | `gradio` |
+| **Text-to-Speech** | `gTTS` |
 
 ---
 
 ## 🔮 Future Improvements
 
-While this project is a fully functional proof-of-concept, there are several ways it could be enhanced for a production environment:
-
-- **📈 Scale the LLM**: For even higher quality responses and more nuanced conversations, we could upgrade to a much larger model (e.g., Llama 3, Mistral Large). This would require a more powerful GPU for inference to maintain an acceptable response time.
-
-- **🎯 Customize the Knowledge Base**: Instead of a generic FAQ dataset [(MakTek/Customer_support_faqs_dataset)](https://huggingface.co/datasets/MakTek/Customer_support_faqs_dataset), the agent could be provided with a company's internal documentation, product manuals, or past support tickets. This would make it a highly specialized and valuable internal tool.
-
-- **⚙️ Fine-Tune the Embedding Model**: For a highly specific domain (e.g., medical or legal support), the `all-MiniLM-L6-v2` embedding model could be fine-tuned on domain-specific text to improve the accuracy of the document retrieval step.
-
-- **🗣️ Higher-Quality TTS**: While `gTTS` is reliable, we could integrate a more advanced, natural-sounding TTS model (like those from Coqui AI or Microsoft) for a more polished user experience.
-
-- **🎤 Add Speech-to-Text (STT)**: Re-integrate a robust STT model (like `openai/whisper`) to create a full voice-to-voice conversation flow, allowing users to speak their queries directly to the agent.
-
-- **🐳 Dockerize for Deployment**: The application could be containerized using Docker, making it easy to deploy consistently across different environments, from local machines to cloud servers.
+- **Fine-Tune a Specialized Moderator**: For ultimate accuracy, the zero-shot classifier in the safeguard could be replaced with a smaller model (like DistilBERT) fine-tuned on thousands of company-specific on-topic/off-topic examples.
+- **Output Moderation**: Add a final check on the agent's response *before* it's sent to the user to scan for PII, harmful language, or factual inconsistencies against the source context.
+- **Customize the Knowledge Base**: Replace the generic FAQ dataset with a company's internal documentation and past support tickets to create a highly specialized and valuable internal tool.
+- **🐳 Dockerize for Deployment**: Containerize the application using Docker for consistent and scalable deployment across different environments.
 
 ---
 
 ## 🚀 Getting Started
 
 Follow these steps to get the agent running locally.
+**Note :** you can find the code for the from scratch implementation and the Langchain version in the scripts folder. you can run the Gradio app for the langchain version locally as i only have the from scratch implementaino up in the huggingface spaces.
+
+**From scratch implementation scripts:** `agent.py` , `app.py`
+**Langchain version scripts:** `agent_langchain.py` , `app_langchain.py`
 
 ### Prerequisites
-
-You need to have Python 3.8+ installed on your system.
+You need to have Python 3.8+ and Git installed.
 
 ### Installation & Usage
-
-1. **Clone the repository (or download the files):**
-
+1.  **Clone the repository:**
     ```sh
-    git clone <your-repo-url>
-    cd <your-repo-directory>
+    git clone https://github.com/DanielKiani/CustomerServiceAgent
+    cd CustomerServiceAgent
     ```
 
 2.  **Install the dependencies:**
@@ -117,7 +120,14 @@ You need to have Python 3.8+ installed on your system.
     ```
 
 3.  **Run the terminal-based demo (optional):**
-    To see the core agent logic in action, run the `agent.py` script.
+    To see the core agent logic and debug output in your terminal, run `agent.py` or `agent_langchain.py`.
     ```sh
-    python agent.py
+    python agent_langchain.py
     ```
+
+4.  **Launch the Gradio Web App:**
+    To start the interactive user interface, run `app.py` or `app_langchain.py`.
+    ```sh
+    python app_langchain.py
+    ```
+    This will print a local URL in your terminal. Open it in your browser to interact with the agent.
