@@ -90,6 +90,7 @@ The final architecture is a robust pipeline with a pre-processing safeguard gate
 ## 🔮 Future Improvements
 
 - **Fine-Tune a Specialized Moderator**: For ultimate accuracy, the zero-shot classifier in the safeguard could be replaced with a smaller model (like DistilBERT) fine-tuned on thousands of company-specific on-topic/off-topic examples.
+- **Use a better TTS**: I used a very simple TTS and it does the job but it doesn't sound "natural".
 - **Output Moderation**: Add a final check on the agent's response *before* it's sent to the user to scan for PII, harmful language, or factual inconsistencies against the source context.
 - **Customize the Knowledge Base**: Replace the generic FAQ dataset with a company's internal documentation and past support tickets to create a highly specialized and valuable internal tool.
 - **🐳 Dockerize for Deployment**: Containerize the application using Docker for consistent and scalable deployment across different environments.
